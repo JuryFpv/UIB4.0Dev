@@ -1,0 +1,4585 @@
+{
+  "swagger" : "2.0",
+  "info" : {
+    "description" : "This document is written to support developers on integration of Non-SAP systems (also includes Cloud systems) with UIB .\nThis document provides the RESTFull APIs specification of Helper service . For Clouds system integrated with UIB, based on this, developers need to explain to the source systems the structure, parameters , sample values which UIB requires.\nThe authentication mechanism should be discussed as the earliest as possible. Depending on every each source system,  the authentication should be attached to all REST service requests.\nThe Helper service and ITSP ServiceNow are using techinical users , bTravel uses API key, and IPT with PriceFX is using JWT token for authentication.\nfgfd",
+    "version" : "1.0.0",
+    "title" : "API structure for UIB to get data from Helper Service or NonSAP Cloud system",
+    "termsOfService" : "",
+    "contact" : {
+      "email" : "Dong.NguyenDuc@vn.bosch.com"
+    },
+    "license" : {
+      "name" : "Apache 2.0",
+      "url" : "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "host" : "server.domain.com",
+  "basePath" : "/uib3RESTfulapi",
+  "schemes" : [ "https", "http" ],
+  "security" : [ {
+    "ApiKeyAuth" : [ ]
+  } ],
+  "paths" : {
+    "/pendingWorkitems/count" : {
+      "get" : {
+        "tags" : [ "UIB Tile" ],
+        "summary" : "Get count of the pending workitems for the current user, this number will be displayed in the UIB Tiles.",
+        "description" : "Retrieves the number of pending workitems for the current user. The Helper Service does not expose this API but it is recommended for Cloud systems to reduce the time for counting.",
+        "parameters" : [ {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name (Bosch's NTID) of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns the count of pending workitems for the current user.",
+            "schema" : {
+              "type" : "integer",
+              "description" : "The count of pending workitems for the current user."
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "",
+                "errorDescription" : "An error occured: 400 Bad Request"
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                "errorDescription" : "An error occured: 403 Forbidden"
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "TASK_NOT_FOUND",
+                "errorDescription" : "An error occured: 404 Not Found"
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : null,
+                "errorDescription" : "An error occured: 405 Method Not Allowed"
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : null,
+                "errorDescription" : "An error occured: 406 Not Acceptable"
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "TASK_INVALID_STATE_TRANSITION",
+                "errorDescription" : "An error occured: 500 Internal Server Error"
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-500"
+            }
+          }
+        }
+      }
+    },
+    "/pendingWorkitems" : {
+      "post" : {
+        "tags" : [ "Master List" ],
+        "summary" : "Get pending workitems for the current user.As result, the data will be displayed in the Master list with corresponding selected filter criteria.",
+        "description" : "When the user access UIB, UIB sends the following reuqest to Helper Service or Source system (for Cloud systems) to fetch data on connected source system for available pending work items based on logged-in user. This one return basic information related to all pending work items , such as title, creator/requestor, priority, and substitute. That data set display on the Master list.\nIn addition, criteria will send some filters to Source systems.As result, the data will be displayed in the Master list with corresponding selected filter criteria.",
+        "parameters" : [ {
+          "name" : "locale",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string",
+          "default" : "en_UK"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "system",
+          "in" : "header",
+          "description" : "Applicable for NonSAP system go through Helper Servive. Identifier agreed during integration for each system.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "State",
+          "in" : "header",
+          "description" : "State of Work items. State `pending` means get all task definitions for pending work items (Inbox).State `processed` means get all task definitions for processed work items (Outbox)",
+          "required" : false,
+          "type" : "string",
+          "default" : "pending"
+        }, {
+          "in" : "body",
+          "name" : "body",
+          "description" : "Specify the filter and sort attributes for work items. Supports filter multiple values that are combined with ','. For example:\nStatus: `IN_PROGRESS,READY,RESERVED,COMPLETED,CANCELED`.\nPriority: `MEDIUM,HIGH,LOW,VERY_HIGH`.\nOperation:`eq, le, ge`.\nSubstitutedUser: `null, T_UIB80001,T_UIB80002,T_UIB80003`.\nState:`pending` or `processed`",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/definitions/FilterAndSort"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns a list of work items for the current user.",
+            "examples" : {
+              "application/json" : {
+                "results" : [ {
+                  "InstanceID" : "1000000001",
+                  "TaskDefinitionID" : "TS96007915",
+                  "TaskDefinitionName" : "FI Workflow",
+                  "Status" : "READY",
+                  "TaskTitle" : "Enter accounting data 34566 (vendor: CALIBRATION LABORATORY CO,LTD.)",
+                  "CreatedOn" : "2022-04-04T11:02:06.239Z",
+                  "CreatedBy" : "T_UIB80001",
+                  "CreatedByName" : "Test User 1 (GS/ACE-IN)",
+                  "Processor" : "T_UIB80002",
+                  "Priority" : "LOW",
+                  "PriorityNumber" : 6,
+                  "RequestReceivedAs" : "assignee",
+                  "SubstitutedUserName\"" : ""
+                }, {
+                  "InstanceID" : "1000000002",
+                  "TaskDefinitionID" : "TS96007915",
+                  "TaskDefinitionName" : "FI Workflow",
+                  "Status" : "READY",
+                  "TaskTitle" : "Enter accounting data 34566 (vendor: CALIBRATION LABORATORY CO,LTD.)",
+                  "CreatedOn" : "2022-04-04T11:02:06.239Z",
+                  "CreatedBy" : "T_UIB80001",
+                  "CreatedByName" : "Test User 1 (GS/ACE-IN)",
+                  "Processor" : "T_UIB80002",
+                  "Priority" : "LOW",
+                  "PriorityNumber" : 6,
+                  "RequestReceivedAs" : "assignee",
+                  "SubstitutedUserName" : null
+                } ]
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/WorkItems"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "TASK_BAD_REQUEST",
+                "errorDescription" : "An error occured: 400 Bad Request"
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource.' schema: $ref: "
+              }
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                "errorDescription" : "An error occured: 403 Forbidden"
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "TASK_NOT_FOUND",
+                "errorDescription" : "An error occured: 404 Not Found"
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : null,
+                "errorDescription" : "An error occured: 405 Method Not Allowed"
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : null,
+                "errorDescription" : "An error occured: 406 Not Acceptable"
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "TASK_INVALID_STATE_TRANSITION",
+                "errorDescription" : "An error occured: 500 Internal Server Error"
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-500"
+            }
+          }
+        }
+      }
+    },
+    "/taskDefinitions" : {
+      "get" : {
+        "tags" : [ "Master List" ],
+        "summary" : "The service fetch data for pending workflow types/workflow name/application name of source systems (for cloud) or of source system which is stored  in Elastic Search. As result, the data will be displayed at the popup Filter by Task Type",
+        "description" : "UIB sends request to source system when a user clicks on the Filter button.The source system should return a list of process acccording to the pending work item available. \nFor instance, Non-SAP systems has different forms, each form is a process (application). They are listed out eSignature, approval form, leave form, etc. If the pending work-items for a user contains eSignature, leave form, then the service return eSignature and Leave form. ",
+        "parameters" : [ {
+          "name" : "locale",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string",
+          "default" : "en_UK"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "system",
+          "in" : "header",
+          "description" : "Required for NonSAP system go through Helper Servive. Identifier agreed during integration for each system.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "State",
+          "in" : "header",
+          "description" : "State of Work items. State `pending` means get all task definitions for pending work items.State `processed` means get all task definitions for processed work items",
+          "required" : false,
+          "type" : "string",
+          "default" : "pending"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns a list of task definitions for the current user.",
+            "schema" : {
+              "$ref" : "#/definitions/TaskDefinitions"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_NOT_FOUND",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : null,
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : null,
+                  "errorDescription" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_INVALID_STATE_TRANSITION",
+                  "errorDescription" : "An error occured: 500 Internal Server Error"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-500"
+            }
+          }
+        }
+      }
+    },
+    "/filterPendingWorkItems" : {
+      "get" : {
+        "tags" : [ "Master List" ],
+        "summary" : "The service fetch all the pending item of back-end system that is stored in Elastic Search. In addition, criteria will sent some filter to Helper Service for execution the query to Elastic Search. As result, the data will be displayed on Master list with corresponding selected filter criteria.",
+        "description" : "Only NonSap systems which go through Helper Service use this endpoint for filtering because it will filter data already stored in Elastic search. Not recommend for Clould systems. Ex: ITSP ServiceNow will post the filter creteria when getting pendingWorkitems.",
+        "parameters" : [ {
+          "name" : "locale",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string",
+          "default" : "en_UK"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "system",
+          "in" : "header",
+          "description" : "Required for NonSAP system go through Helper Servive. Identifier agreed during integration for each system.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "in" : "body",
+          "name" : "body",
+          "description" : "Specify the filter and sort attributes for work items. Supports filter multiple values that are combined with ','.",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/definitions/FilterAndSort"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns a list of task definitions for the current user.",
+            "schema" : {
+              "$ref" : "#/definitions/TaskDefinitions"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_NOT_FOUND",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : null,
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : null,
+                  "errorDescription" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_INVALID_STATE_TRANSITION",
+                  "errorDescription" : "An error occured: 500 Internal Server Error"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-500"
+            }
+          }
+        }
+      }
+    },
+    "/workItems/{InstanceID}" : {
+      "get" : {
+        "tags" : [ "Detail View" ],
+        "summary" : "Get work item details",
+        "description" : "UIB calls this API when a user clicks on one workitem in the pending workitem list (master list). The source system should return all necessary information in order for approver to make a decision, and all that information will be displayed in detail page .",
+        "parameters" : [ {
+          "name" : "Accept-Language",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string",
+          "default" : "en_UK"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "system",
+          "in" : "header",
+          "description" : "Applicable for NonSAP system go through Helper Servive. Identifier agreed during integration for each system.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "browserTimezone",
+          "in" : "header",
+          "description" : "Browser timezone for dynamic Grid table only.",
+          "required" : false,
+          "type" : "string",
+          "enum" : [ "UTC", "UTC+1", "UTC+10", "UTC+11", "UTC+12", "UTC+13", "UTC+14", "UTC+2", "UTC+3", "UTC+4", "UTC+5", "UTC+53", "UTC+6", "UTC+63", "UTC+7", "UTC+8", "UTC+9", "UTC-1", "UTC-10", "UTC-11", "UTC-12", "UTC-2", "UTC-3", "UTC-4", "UTC-5", "UTC-6", "UTC-7", "UTC-8", "UTC-83", "UTC-9" ]
+        }, {
+          "name" : "InstanceID",
+          "in" : "path",
+          "description" : "The ID of the work item.",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns detail information of a work item.  In the response structure , in general : \n\n- WorkItemInfo > CustAttributes : all attributes declared in this section will be displayed in the \"Information tab\"\n- DynamicGrids : in the \"Information tab\", if we want to display a table, all data of table like column headers, values... need to construct inside in this attribute\n- TaskDefinitionID,TaskDefinitionName,CreatedByName,CreatedOn will be displayed in the Header section.\n- The rest information is the general information of a workitem.",
+            "examples" : {
+              "application/json" : {
+                "InstanceID" : "1000000001",
+                "TaskDefinitionID" : "TS96007915",
+                "TaskDefinitionName" : "FI Workflow",
+                "Status" : "READY",
+                "TaskTitle" : "Enter accounting data 34566 (vendor: CALIBRATION LABORATORY CO,LTD.)",
+                "CreatedOn" : "2022-04-04T10:08:23.128Z",
+                "CreatedBy" : "T_UIB80001",
+                "CreatedByName" : "Test User 1 (GS/ACE-IN)",
+                "Processor" : "T_UIB80002",
+                "Priority" : "LOW",
+                "PriorityNumber" : 6,
+                "RequestReceivedAs" : "assignee",
+                "SubstitutedUserName\"" : "",
+                "TaskSupports" : {
+                  "NumberOfComments" : 1,
+                  "NumberOfAttachments" : 2,
+                  "NumberOfObjects" : 0,
+                  "OpenTaskURL" : "https://google.com",
+                  "MoreDetailsPDF" : true,
+                  "CustomField1" : "https://editAccoutingTable.link.com",
+                  "CustomField2" : "string",
+                  "CustomField3" : "string",
+                  "HeaderMessage" : {
+                    "MessageType" : "E",
+                    "MessageText" : "This work item cannot be proccessed in Unified Inbox as it requres additional actions in AP Moniter system. Hence, please use \"Open Task\" button in the buttom right conner to open this work item in AP Monito directly on yout desktop."
+                  }
+                },
+                "WorkItemInfo" : {
+                  "CustAttributes" : [ {
+                    "AttributeName" : "Description",
+                    "AttributeValue" : "FI Workflow",
+                    "AttributeType" : "TEXT",
+                    "AttributeOrder" : 1
+                  }, {
+                    "AttributeName" : "Invoice Party",
+                    "AttributeValue" : 97959723,
+                    "AttributeType" : "TEXT",
+                    "AttributeOrder" : 2
+                  }, {
+                    "AttributeName" : "Invoice Number",
+                    "AttributeValue" : 11111,
+                    "AttributeType" : "TEXT",
+                    "AttributeOrder" : 3
+                  }, {
+                    "AttributeName" : "Document Date",
+                    "AttributeValue" : 20220102,
+                    "AttributeType" : "DATE",
+                    "AttributeOrder" : 4
+                  }, {
+                    "AttributeName" : "Gross amount",
+                    "AttributeValue" : "30.00 USD",
+                    "AttributeType" : "TEXT",
+                    "AttributeOrder" : 5
+                  }, {
+                    "AttributeName" : "Cycle history",
+                    "AttributeValue" : "https://link.com",
+                    "AttributeType" : "LINK",
+                    "AttributeOrder" : 6
+                  } ]
+                },
+                "DynamicGrids" : [ {
+                  "headerDetails" : [ {
+                    "headerIndex" : "1",
+                    "headerValue" : "Line item"
+                  }, {
+                    "headerIndex" : "2",
+                    "headerValue" : "G/L Account"
+                  }, {
+                    "headerIndex" : "3",
+                    "headerValue" : "Description"
+                  }, {
+                    "headerIndex" : "4",
+                    "headerValue" : "Debit/Credit"
+                  }, {
+                    "headerIndex" : "5",
+                    "headerValue" : "Cost Center"
+                  }, {
+                    "headerIndex" : "6",
+                    "headerValue" : "Gross amount"
+                  }, {
+                    "headerIndex" : "7",
+                    "headerValue" : "Currency"
+                  } ],
+                  "rowDetails" : [ {
+                    "1" : "000001",
+                    "2" : "0123456789",
+                    "3" : "Test account item",
+                    "4" : "0123456789",
+                    "5" : "ABCD",
+                    "6" : "134.00",
+                    "7" : "USD"
+                  } ],
+                  "title" : "FI invoice Accounting lines",
+                  "sequence" : 1
+                }, {
+                  "headerDetails" : [ {
+                    "headerIndex" : "1",
+                    "headerValue" : "1st column"
+                  }, {
+                    "headerIndex" : "2",
+                    "headerValue" : "2nd column"
+                  }, {
+                    "headerIndex" : "3",
+                    "headerValue" : "3rd column"
+                  }, {
+                    "headerIndex" : "4",
+                    "headerValue" : "4th column"
+                  }, {
+                    "headerIndex" : "5",
+                    "headerValue" : "5th column"
+                  } ],
+                  "rowDetails" : [ {
+                    "1" : "Cell1 column1",
+                    "2" : "Cell2 column1",
+                    "3" : "Cell3 column1",
+                    "4" : "Cell4 column1",
+                    "5" : "Cell5 column1"
+                  }, {
+                    "1" : "Cell1 column2",
+                    "2" : "Cell2 column2",
+                    "3" : "Cell3 column2",
+                    "4" : "Cell4 column2",
+                    "5" : "Cell5 column2"
+                  } ],
+                  "title" : "Dynamic table 2",
+                  "sequence" : 2
+                } ]
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/WorkItem"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "DEFINED_A_CODE",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "DEFINED_A_CODE",
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "DEFINED_A_CODE",
+                  "errorDescription" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "code" : "TASK_INVALID_STATE_TRANSITION",
+                  "message" : "An error occured: 500 Internal Server Error"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-500"
+            }
+          }
+        }
+      }
+    },
+    "/moreDetailsPdf/{InstanceID}" : {
+      "get" : {
+        "tags" : [ "Detail View" ],
+        "summary" : "Generate PDF viewer in the Information tab",
+        "description" : "UIB calls this endpoint when user clicks on 'More detail in PDF' in the Information tab. The result of this endpoint is a binary content.",
+        "parameters" : [ {
+          "name" : "InstanceID",
+          "in" : "path",
+          "description" : "The ID of the workitem to be processed.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns binary data, file name",
+            "schema" : {
+              "$ref" : "#/definitions/DownloadAttachment"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_NOT_FOUND",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_NOT_FOUND",
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "message" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "code" : "TASK_INVALID_STATE_TRANSITION",
+                  "message" : "An error occured: 500 Internal Server Error"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-500"
+            }
+          }
+        }
+      }
+    },
+    "/approverNotes/{InstanceID}" : {
+      "get" : {
+        "tags" : [ "Detail View" ],
+        "summary" : "Get Approver’s Comments",
+        "description" : "UIB calls this endpoint when a user clicks on the 'Comment tab' and the source system should return a list of comment (if there is no approver note, return null).",
+        "parameters" : [ {
+          "name" : "locale",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string",
+          "default" : "en_UK"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "InstanceID",
+          "in" : "path",
+          "description" : "The ID of the workitem to be processed.",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Return a comment in table format",
+            "examples" : {
+              "application/json" : {
+                "results" : [ {
+                  "InstanceID" : "1000000001",
+                  "ConmmentID" : "1111111111",
+                  "CreatedAt" : "2022-04-04T10:08:23.128Z",
+                  "CreatedBy" : "T_UIB80001",
+                  "CreatedByName" : "Test User 1 (GS/ACE-IN)",
+                  "Text" : "Forward to T_UIB80004",
+                  "Action" : "Forwarded"
+                }, {
+                  "InstanceID" : "1000000001",
+                  "ConmmentID" : "1111111112",
+                  "CreatedAt" : "2022-04-04T10:08:23.128Z",
+                  "CreatedBy" : "T_UIB80004",
+                  "CreatedByName" : "Test user 4 (SX/BSW2) on behalf of T_UIB80003 Test (CI/PWV2)",
+                  "Text" : "Comment text",
+                  "Action" : "Approved"
+                } ]
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/ApproverNotes"
+            }
+          },
+          "202" : {
+            "description" : "Returns a list of comments for current work item.",
+            "examples" : {
+              "application/json" : {
+                "results" : {
+                  "headerDetails" : [ {
+                    "headerValue" : "Name/Department",
+                    "headerIndex" : "1"
+                  }, {
+                    "headerValue" : "Role",
+                    "headerIndex" : "2"
+                  }, {
+                    "headerValue" : "Approval Status",
+                    "headerIndex" : "3"
+                  }, {
+                    "headerValue" : "Comments",
+                    "headerIndex" : "4"
+                  } ],
+                  "rowDetails" : [ {
+                    "1" : "user1",
+                    "2" : "Top Management",
+                    "3" : "Stopped",
+                    "4" : "Stopped by User3)"
+                  }, {
+                    "1" : "user2",
+                    "2" : "Sales",
+                    "3" : "Stopped",
+                    "4" : "Stopped by User3"
+                  }, {
+                    "1" : "User3",
+                    "2" : "Pricing",
+                    "3" : "Stopped",
+                    "4" : "Stopped by User3"
+                  }, {
+                    "1" : "user4",
+                    "2" : "Project Manager, Final approver",
+                    "3" : "Stopped",
+                    "4" : "Stopped by User3"
+                  } ]
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/ApproverNotes"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "code" : "TASK_BAD_REQUEST",
+                  "message" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "error" : "unauthorized",
+                "error_description" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "code" : "TASK_USER_NOT_AUTHORIZED",
+                  "message" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "code" : "TASK_NOT_FOUND",
+                  "message" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "message" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "message" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "code" : "TASK_INVALID_STATE_TRANSITION",
+                  "message" : "An error occured: 500 Internal Server Error"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-500"
+            }
+          }
+        }
+      }
+    },
+    "/attachments/{InstanceID}" : {
+      "get" : {
+        "tags" : [ "Detail View" ],
+        "summary" : "Get Attachments of current work item",
+        "description" : "UIB calls this endpoint when a user clicks on attachment tab and the workflow system should return a list of attachments of this workflow item.\nUIB call this endpoint two times for getting information. \n- The first time: trigger when user click on the item on Master list in term of get the count of attachment \n- The second time: trigger when user click on the Attachment Tab Icon in Detail view, this request will fetch the actual items to show at attachment tab. ",
+        "parameters" : [ {
+          "name" : "locale",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string",
+          "default" : "en_UK"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "InstanceID",
+          "in" : "path",
+          "description" : "The ID of the workitem to be processed.",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns a list of attachments for current work item.",
+            "examples" : {
+              "application/json" : {
+                "results" : [ {
+                  "InstanceID" : "1000000001",
+                  "ID" : "1111111111",
+                  "FileName" : "test.pdf",
+                  "CreatedAt" : "2022-04-04T10:08:23.128Z",
+                  "CreatedBy" : "T_UIB80001",
+                  "CreatedByName" : "Test User 1 (GS/ACE-IN)",
+                  "Mime_Type" : "application/pdf",
+                  "FileSize" : 123,
+                  "AttachmentSupports" : {
+                    "Delete" : true
+                  }
+                }, {
+                  "InstanceID" : "1000000001",
+                  "ID" : "1111111112",
+                  "FileName" : "test.docx",
+                  "CreatedAt" : "2022-04-04T10:08:23.128Z",
+                  "CreatedBy" : "T_UIB80004",
+                  "CreatedByName" : "Test user 4 (SX/BSW2)",
+                  "Mime_Type" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                  "FileSize" : 123,
+                  "AttachmentSupports" : {
+                    "Delete" : false
+                  }
+                } ]
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/Attachments"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_NOT_FOUND",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_INVALID_STATE_TRANSITION",
+                  "errorDescription" : "An error occured: 500 Internal Server Error"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-500"
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "Detail View" ],
+        "summary" : "Upload attachment for current work item",
+        "description" : "UIB calls this endpoint when user click on the “Plus” icon, a pop-up will show for user choosing the file. After Ok is performed, system will send the file to workflow system.",
+        "parameters" : [ {
+          "name" : "locale",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string",
+          "default" : "en_UK"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "InstanceID",
+          "in" : "path",
+          "description" : "The ID of the workitem to be processed.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "in" : "body",
+          "name" : "body",
+          "description" : "attachment information. Include Binary data.",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/definitions/UploadAttachment"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns a list of attachments for current work item.",
+            "examples" : {
+              "application/json" : {
+                "InstanceID" : "1000000001",
+                "ID" : "1111111111",
+                "FileName" : "test.pdf",
+                "CreatedAt" : "2022-04-04T10:08:23.128Z",
+                "CreatedBy" : "T_UIB80001",
+                "CreatedByName" : "Test User 1 (GS/ACE-IN)",
+                "Mime_Type" : "application/pdf",
+                "FileSize" : 240,
+                "AttachmentSupports" : {
+                  "Delete" : true
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/Attachment"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_NOT_FOUND",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_INVALID_STATE_TRANSITION",
+                  "errorDescription" : "An error occured: 500 Internal Server Error"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-500"
+            }
+          }
+        }
+      }
+    },
+    "/attachments/{InstanceID}/{ID}" : {
+      "get" : {
+        "tags" : [ "Detail View" ],
+        "summary" : "Get binary data of attachment file",
+        "description" : "UIB calls this endpoint when users click on the file, the request is sent directly to back-end system to get the content in binary.",
+        "parameters" : [ {
+          "name" : "locale",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string",
+          "default" : "en_UK"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "InstanceID",
+          "in" : "path",
+          "description" : "The ID of the workitem to be processed.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "ID",
+          "in" : "path",
+          "description" : "The ID of the attachment. If value of `ID` is `MoreDetailsPdf`, that mean get binary data for `MoreDetailsPDF`",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns binary data, file name",
+            "schema" : {
+              "$ref" : "#/definitions/DownloadAttachment"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_NOT_FOUND",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_INVALID_STATE_TRANSITION",
+                  "errorDescription" : "An error occured: 500 Internal Server Error"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-500"
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "Detail View" ],
+        "summary" : "Delete a attachment file",
+        "description" : "Delete a attachment file by attachment ID",
+        "parameters" : [ {
+          "name" : "locale",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string",
+          "default" : "en_UK"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "InstanceID",
+          "in" : "path",
+          "description" : "The ID of the workitem to be processed.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "ID",
+          "in" : "path",
+          "description" : "The ID of the attachment.",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Response success.",
+            "examples" : {
+              "application/json" : {
+                "result" : "success"
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskReponse-200"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_NOT_FOUND",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_INVALID_STATE_TRANSITION",
+                  "errorDescription" : "An error occured: 500 Internal Server Error"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-500"
+            }
+          }
+        }
+      }
+    },
+    "/relatedObject/{InstanceID}" : {
+      "get" : {
+        "tags" : [ "Detail View" ],
+        "summary" : "Get Approver’s related object",
+        "description" : "Retrieves a list of the related object links for the current work items.",
+        "parameters" : [ {
+          "name" : "locale",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string",
+          "default" : "en_UK"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "InstanceID",
+          "in" : "path",
+          "description" : "The ID of the workitem to be processed.",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns a list of related objects for current work item.",
+            "examples" : {
+              "application/json" : {
+                "results" : [ {
+                  "InstanceID" : "1000000001",
+                  "Sequence" : 1,
+                  "ObjectID" : "1111111111",
+                  "ObjectLink" : "https://abc.com/object1",
+                  "Label" : "Invoice xxxxxx"
+                }, {
+                  "InstanceID" : "1000000001",
+                  "Sequence" : 2,
+                  "ObjectID" : "1111111111",
+                  "ObjectLink" : "https://abc.com/object1",
+                  "Label" : "Invoice xxxxxx"
+                } ]
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/RelatedObjects"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_NOT_FOUND",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_INVALID_STATE_TRANSITION",
+                  "errorDescription" : "An error occured: 500 Internal Server Error"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-500"
+            }
+          }
+        }
+      }
+    },
+    "/decisions/{InstanceID}" : {
+      "get" : {
+        "tags" : [ "Decision" ],
+        "summary" : "Get Actions",
+        "description" : "UIB calls this API after user clicks the specific workitem in pending workitem list (master list). The source system should return all the information related to actions available for this workitem, such as Approve, Reject, Forward, etc",
+        "parameters" : [ {
+          "name" : "locale",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string",
+          "default" : "en_UK"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "InstanceID",
+          "in" : "path",
+          "description" : "The ID of the workitem to be processed.",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns a list of decistions of this worktem for the current user.",
+            "examples" : {
+              "application/json" : {
+                "InstanceID" : "11111111111",
+                "results" : [ {
+                  "DecisionKey" : "00001",
+                  "DecisionText" : "Aprrove",
+                  "CommentMandatory" : false,
+                  "Nature" : "POSITIVE"
+                }, {
+                  "DecisionKey" : "00002",
+                  "DecisionText" : "Reject",
+                  "CommentMandatory" : true,
+                  "Nature" : "NEGATIVE"
+                }, {
+                  "DecisionKey" : "00003",
+                  "DecisionText" : "Custom Button",
+                  "CommentMandatory" : true
+                } ]
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/Decisions"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_NOT_FOUND",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_INVALID_STATE_TRANSITION",
+                  "errorDescription" : "An error occured: 500 Internal Server Error"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-500"
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "Decision" ],
+        "summary" : "Handle Action",
+        "description" : "UIB calls this API once after user clicks submit button (after user clicks Approve button). UIB will pass the action name (with or without comments) to the workflow system. Workflow system will return confirmation to UIB after the action perform successfully.",
+        "parameters" : [ {
+          "name" : "locale",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string",
+          "default" : "en_UK"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "InstanceID",
+          "in" : "path",
+          "description" : "The ID of the work item to be claimed.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "in" : "body",
+          "name" : "body",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/definitions/Decision"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Response success.",
+            "examples" : {
+              "application/json" : {
+                "result" : "success"
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskReponse-200"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_NOT_FOUND",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_INVALID_STATE_TRANSITION",
+                  "errorDescription" : "An error occured: 500 Internal Server Error"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskError-500"
+            }
+          }
+        }
+      }
+    },
+    "/Substitution" : {
+      "get" : {
+        "tags" : [ "Substitution" ],
+        "summary" : "Get Substitution rules for the current user",
+        "description" : "Retrieves a list of the substitution rules for the current user.",
+        "parameters" : [ {
+          "name" : "locale",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string",
+          "default" : "en_UK"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns a list of substitution rules for the current user.",
+            "schema" : {
+              "$ref" : "#/definitions/Substitutions"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_NOT_FOUND",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_INVALID_STATE_TRANSITION",
+                  "errorDescription:'An error occured" : "500 Internal Server Error'"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-500"
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "Substitution" ],
+        "summary" : "Add Substitution rule for the current user",
+        "description" : "Creates a substitution rule for the current user.",
+        "parameters" : [ {
+          "name" : "locale",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string",
+          "default" : "en_UK"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "in" : "body",
+          "name" : "body",
+          "description" : "Specify the new substitution rule.",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/definitions/SubstitutionCreatePayload"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Substitution rule for the current user has been created.",
+            "examples" : {
+              "application/json" : {
+                "SubstitutionRuleID" : "82f3541d-137b-4a16-bd6f-86c82db2a763",
+                "User" : "substitute",
+                "BeginDate" : "2022-04-01T02:20:20.454Z",
+                "EndDate" : "2022-04-05T02:20:20.454Z",
+                "FullName" : "substitute",
+                "Mode" : "PLANNED",
+                "Profile" : "APM",
+                "ProfileText" : "A/P monitor",
+                "IsEnabled" : true,
+                "SupportsDeleteSubstitutionRule" : true,
+                "SupportsEnableSubstitutionRule" : true
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/Substitution"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_NOT_FOUND",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_INVALID_STATE_TRANSITION",
+                  "errorDescription:'An error occured" : "500 Internal Server Error'"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-500"
+            }
+          }
+        }
+      }
+    },
+    "/Substitution/{SubstitutionRuleID}" : {
+      "post" : {
+        "tags" : [ "Substitution" ],
+        "summary" : "Delete a substitution rule with specified ID for the current user",
+        "description" : "Delete a substitution rule with specified ID for the current user.",
+        "parameters" : [ {
+          "name" : "Accept-Language",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "SubstitutionRuleID",
+          "in" : "path",
+          "description" : "The ID of the substitution rule to be deleted.",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Response success.",
+            "examples" : {
+              "application/json" : {
+                "result" : "success"
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/TaskReponse-200"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_NOT_FOUND",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_INVALID_STATE_TRANSITION",
+                  "errorDescription:'An error occured" : "500 Internal Server Error'"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-500"
+            }
+          }
+        }
+      }
+    },
+    "/SubstitutionProfile" : {
+      "get" : {
+        "tags" : [ "Substitution" ],
+        "summary" : "Get substitution profiles",
+        "description" : "Retrieves a list of the substitution Profiles for the current user.",
+        "parameters" : [ {
+          "name" : "locale",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string",
+          "default" : "en_UK"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns a list of substitution rules for the current user.",
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionProfile"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_NOT_FOUND",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_INVALID_STATE_TRANSITION",
+                  "errorDescription:'An error occured" : "500 Internal Server Error'"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-500"
+            }
+          }
+        }
+      }
+    },
+    "/Substitutes" : {
+      "get" : {
+        "tags" : [ "Substitution" ],
+        "summary" : "Get substitution rules where the currently logged-in user is a substitute.",
+        "description" : "Retrieves a list of the substitution rules where the currently logged-in user is a substitute.",
+        "parameters" : [ {
+          "name" : "locale",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string",
+          "default" : "en_UK"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Retrieves a list of the substitution rules where the currently logged-in user is a substitute.",
+            "examples" : {
+              "application/json" : {
+                "results" : [ {
+                  "SubstitutionRuleID" : "82f3541d-137b-4a16-bd6f-86c82db2a763",
+                  "User" : "substitute",
+                  "BeginDate" : "2022-04-01T02:20:20.454Z",
+                  "EndDate" : "2022-05-01T02:20:20.454Z",
+                  "FullName" : "substitute",
+                  "Profile" : "APM",
+                  "ProfileText" : "A/P Monitor",
+                  "Mode" : "PLANNED",
+                  "IsEnabled" : true,
+                  "SupportsDeleteSubstitutionRule" : true,
+                  "SupportsEnableSubstitutionRule" : true
+                }, {
+                  "SubstitutionRuleID" : "32f3541d-137b-4s16-bd6f-8fc82db2a763",
+                  "User" : "substitute 2",
+                  "BeginDate" : "2022-04-01T02:20:20.454Z",
+                  "FullName" : "substitute 2",
+                  "Profile" : "",
+                  "ProfileText" : "All",
+                  "Mode" : "UN_PLANNED",
+                  "IsEnabled" : false,
+                  "SupportsDeleteSubstitutionRule" : true,
+                  "SupportsEnableSubstitutionRule" : false
+                } ]
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/Substitutes"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_NOT_FOUND",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_INVALID_STATE_TRANSITION",
+                  "errorDescription:'An error occured" : "500 Internal Server Error'"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-500"
+            }
+          }
+        }
+      }
+    },
+    "/EnableSubstitution" : {
+      "post" : {
+        "tags" : [ "Substitution" ],
+        "summary" : "Support enabling and disabling of passive substitution rules",
+        "description" : "Support enabling and disabling of passive substitution rules. The request can be parameterized.",
+        "parameters" : [ {
+          "name" : "Accept-Language",
+          "in" : "header",
+          "description" : "Provide a preferred language. If a translation is available, relevant texts are returned in this language.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "userId",
+          "in" : "header",
+          "description" : "Unique user-name of the approver making a request.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "X-API-Key",
+          "in" : "header",
+          "description" : "API key for Authentication.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "SubstitutionRuleID",
+          "in" : "header",
+          "description" : "The ID of the passive substitution rule to be enabled or disabled.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "Enabled",
+          "in" : "header",
+          "description" : "Indicates whether the substitution rule is enabled.",
+          "required" : true,
+          "type" : "boolean"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Accepted the request to enable or disable the substitution rule with the specified id.",
+            "examples" : {
+              "application/json" : {
+                "SubstitutionRuleID" : "82f3541d-137b-4a16-bd6f-86c82db2a763",
+                "User" : "substitute",
+                "BeginDate" : "2022-04-01T02:20:20.454Z",
+                "EndDate" : "2022-04-02T02:20:20.454Z",
+                "FullName" : "substitute",
+                "Profile" : "APM",
+                "ProfileText" : "A/P monitor",
+                "Mode" : "PLANNED",
+                "IsEnabled" : true,
+                "SupportsDeleteSubstitutionRule" : true,
+                "SupportsEnableSubstitutionRule" : true
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/Substitute"
+            }
+          },
+          "400" : {
+            "description" : "The syntax of the sent request is invalid.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_BAD_REQUEST",
+                  "errorDescription" : "An error occured: 400 Bad Request"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-400"
+            }
+          },
+          "401" : {
+            "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+            "examples" : {
+              "application/json" : {
+                "errorCode" : "unauthorized",
+                "errorDescription" : "Full authentication is required to access this resource."
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403" : {
+            "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "TASK_USER_NOT_AUTHORIZED",
+                  "errorDescription" : "An error occured: 403 Forbidden"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-403"
+            }
+          },
+          "404" : {
+            "description" : "The requested object could not be found.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorCode" : "SUBSTITUTION_NOT_FOUND",
+                  "errorDescription" : "An error occured: 404 Not Found"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-404"
+            }
+          },
+          "405" : {
+            "description" : "The action to be executed is not supported by the service.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 405 Method Not Allowed"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-405"
+            }
+          },
+          "406" : {
+            "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "An error occured: 406 Not Acceptable"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-406"
+            }
+          },
+          "500" : {
+            "description" : "An error occurred while processing the request.",
+            "examples" : {
+              "application/json" : {
+                "error" : {
+                  "errorDescription" : "SUBSTITUTION_INVALID_STATE_TRANSITION",
+                  "errorDescription:'An error occured" : "500 Internal Server Error'"
+                }
+              }
+            },
+            "schema" : {
+              "$ref" : "#/definitions/SubstitutionError-500"
+            }
+          }
+        }
+      }
+    }
+  },
+  "securityDefinitions" : {
+    "ApiKeyAuth" : {
+      "type" : "apiKey",
+      "name" : "X-API-Key",
+      "in" : "header"
+    }
+  },
+  "definitions" : {
+    "WorkItem" : {
+      "type" : "object",
+      "properties" : {
+        "InstanceID" : {
+          "type" : "string",
+          "description" : "The ID of the work item.",
+          "minLength" : 10,
+          "maxLength" : 255
+        },
+        "TaskDefinitionID" : {
+          "type" : "string",
+          "description" : "The ID of the task definition this work item belongs to. The ID consists of the task definition name and the workflow definition ID  in lowercase using the following format: {task definition name}@{workflow definition ID}.  "
+        },
+        "TaskDefinitionName" : {
+          "type" : "string",
+          "description" : "The modeled task definition name."
+        },
+        "Status" : {
+          "type" : "string",
+          "description" : "The current status of the work item.",
+          "enum" : [ "READY", "IN_PROGRESS", "RESERVED", "CANCELED", "COMPLETED" ]
+        },
+        "TaskTitle" : {
+          "type" : "string",
+          "description" : "The title of the work item as it appears in the inbox. Translation of this text is currently not supported."
+        },
+        "CreatedOn" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The time the work item was created."
+        },
+        "CreatedBy" : {
+          "type" : "string",
+          "description" : "The user who created the work item. The user ID is at most 255 characters long.",
+          "maxLength" : 255
+        },
+        "CreatedByName" : {
+          "type" : "string",
+          "description" : "As of now, this returns the same value as the CreatedBy property. This is subject to change."
+        },
+        "Processor" : {
+          "type" : "string",
+          "description" : "The user who works on the work item. The user ID is at most 255 characters long",
+          "maxLength" : 255
+        },
+        "CompletedOn" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The time by which the work item must be completed."
+        },
+        "SubstitutedUserName" : {
+          "type" : "string",
+          "description" : "The name of the Main user who is substituted. This is currently not implemented in SAP Workflow service and will always return null. This is subject to change."
+        },
+        "Priority" : {
+          "type" : "string",
+          "description" : "The priority of the work item.",
+          "enum" : [ "LOW", "MEDIUM", "HIGH", "VERY_HIGH" ]
+        },
+        "PriorityNumber" : {
+          "type" : "integer",
+          "description" : "The numerical representation of the priority of the work item."
+        },
+        "TotalAmount" : {
+          "type" : "string"
+        },
+        "Currency" : {
+          "type" : "string"
+        },
+        "CustomValue1" : {
+          "type" : "string"
+        },
+        "CustomValue2" : {
+          "type" : "string"
+        },
+        "CustomValue3" : {
+          "type" : "string"
+        },
+        "CustomValue4" : {
+          "type" : "string"
+        },
+        "CustomValue5" : {
+          "type" : "string"
+        },
+        "TaskSupports" : {
+          "$ref" : "#/definitions/WorkItem_TaskSupports"
+        },
+        "WorkItemInfo" : {
+          "$ref" : "#/definitions/WorkItem_WorkItemInfo"
+        },
+        "DynamicGrids" : {
+          "type" : "array",
+          "description" : "Dynamic Grids (table). If the attributes of dynamic Grids table contain datetime format. The value of these attributes need to be convert to `browserTimezone`",
+          "items" : {
+            "$ref" : "#/definitions/WorkItem_DynamicGrids"
+          },
+          "minItems" : 0
+        }
+      }
+    },
+    "WorkItems" : {
+      "type" : "object",
+      "properties" : {
+        "count" : {
+          "type" : "string",
+          "description" : "When '$inlinecount=allpages' is set as query parameter, count returns the number of results."
+        },
+        "results" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/WorkItems_results"
+          },
+          "minItems" : 0
+        }
+      }
+    },
+    "TaskDefinitions" : {
+      "type" : "object",
+      "properties" : {
+        "results" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/TaskDefinitions_results"
+          },
+          "minItems" : 0
+        }
+      }
+    },
+    "FilterAndSort" : {
+      "type" : "object",
+      "properties" : {
+        "OrderBy" : {
+          "type" : "string",
+          "description" : "Sort maximum is 2 attributes. all cases of OrderBy: `Priority desc|CreatedOn desc` `Priority desc|CreatedOn desc` `Priority asc|CreatedOn desc` `TaskDefinitionID desc|CreatedOn desc` `TaskDefinitionID asc|CreatedOn desc` `Status desc|CreatedOn desc` `Status asc|CreatedOn desc` `Priority desc|CreatedByName asc` `Priority asc|CreatedByName asc` `TaskDefinitionID desc|CreatedByName asc` `TaskDefinitionID asc|CreatedByName asc` `Status desc|CreatedByName asc` `Status asc|CreatedByName asc` `Priority desc|TaskTitle asc` `Priority asc|TaskTitle asc` `TaskDefinitionID desc|TaskTitle asc` `TaskDefinitionID asc|TaskTitle asc` `Status desc|TaskTitle asc` `Status asc|TaskTitle asc` `Priority desc` `Priority asc` `CreatedOn desc` `CreatedByName asc` `TaskTitle asc` .(for example:`Priority desc|CreatedOn desc`)",
+          "default" : "CreatedOn desc",
+          "enum" : [ "Priority desc|CreatedOn desc", "Priority asc|CreatedOn desc", "TaskDefinitionID desc|CreatedOn desc", "TaskDefinitionID asc|CreatedOn desc", "Status desc|CreatedOn desc", "Status asc|CreatedOn desc", "Priority desc|CreatedByName asc", "Priority asc|CreatedByName asc", "TaskDefinitionID desc|CreatedByName asc", "TaskDefinitionID asc|CreatedByName asc", "Status desc|CreatedByName asc", "Status asc|CreatedByName asc", "Priority desc|TaskTitle asc", "Priority asc|TaskTitle asc", "TaskDefinitionID desc|TaskTitle asc", "TaskDefinitionID asc|TaskTitle asc", "Status desc|TaskTitle asc", "Status asc|TaskTitle asc", "Priority desc", "Priority asc", "CreatedOn desc", "CreatedByName asc", "TaskTitle asc" ]
+        },
+        "FilterBy" : {
+          "$ref" : "#/definitions/FilterAndSort_FilterBy"
+        }
+      }
+    },
+    "ApproverNotes" : {
+      "type" : "object",
+      "properties" : {
+        "results" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/ApproverNotes_results"
+          },
+          "minItems" : 0
+        }
+      }
+    },
+    "Attachments" : {
+      "type" : "object",
+      "properties" : {
+        "results" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/Attachments_results"
+          },
+          "minItems" : 0
+        }
+      }
+    },
+    "Attachment" : {
+      "type" : "object",
+      "properties" : {
+        "InstanceID" : {
+          "type" : "string",
+          "description" : "The ID of the work item."
+        },
+        "ID" : {
+          "type" : "string",
+          "description" : "The ID of the Attachment"
+        },
+        "FileName" : {
+          "type" : "string",
+          "description" : "The name of attachment file"
+        },
+        "CreatedAt" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The time the attachment was added."
+        },
+        "CreatedBy" : {
+          "type" : "string",
+          "description" : "The attachment was added by whom (User ID)"
+        },
+        "CreatedByName" : {
+          "type" : "string",
+          "description" : "The attachment was added by whom (Fullname)"
+        },
+        "Mime_Type" : {
+          "type" : "string",
+          "description" : "Type of file"
+        },
+        "FileSize" : {
+          "type" : "integer",
+          "description" : "The size of the attachment."
+        },
+        "AttachmentSupports" : {
+          "$ref" : "#/definitions/Attachments_AttachmentSupports"
+        }
+      }
+    },
+    "UploadAttachment" : {
+      "type" : "object",
+      "properties" : {
+        "FileName" : {
+          "type" : "string",
+          "description" : "The name of attachment file"
+        },
+        "FileSize" : {
+          "type" : "integer",
+          "description" : "The size of the attachment."
+        },
+        "Mime_Type" : {
+          "type" : "string",
+          "description" : "Type of file"
+        },
+        "FileContent" : {
+          "type" : "string",
+          "format" : "binary",
+          "description" : "Binary data"
+        }
+      }
+    },
+    "DownloadAttachment" : {
+      "type" : "object",
+      "properties" : {
+        "FileName" : {
+          "type" : "string",
+          "description" : "The name of attachment file"
+        },
+        "FileSize" : {
+          "type" : "integer",
+          "description" : "The size of the attachment."
+        },
+        "Mime_Type" : {
+          "type" : "string",
+          "description" : "Type of file"
+        },
+        "FileContent" : {
+          "type" : "string",
+          "format" : "binary",
+          "description" : "Binary data"
+        }
+      }
+    },
+    "RelatedObjects" : {
+      "type" : "object",
+      "properties" : {
+        "results" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/RelatedObjects_results"
+          },
+          "minItems" : 0
+        }
+      }
+    },
+    "Decisions" : {
+      "type" : "object",
+      "properties" : {
+        "InstanceID" : {
+          "type" : "string",
+          "description" : "The ID of the work item.",
+          "minLength" : 36,
+          "maxLength" : 255
+        },
+        "results" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/Decisions_results"
+          },
+          "minItems" : 0
+        }
+      }
+    },
+    "Decision" : {
+      "type" : "object",
+      "properties" : {
+        "DecisionKey" : {
+          "type" : "string"
+        },
+        "CommentText" : {
+          "type" : "string"
+        },
+        "ForwardToUserId" : {
+          "type" : "string",
+          "description" : "This attrubue for `Forward` or `Request Information` action"
+        }
+      }
+    },
+    "Substitution" : {
+      "type" : "object",
+      "properties" : {
+        "SubstitutionRuleID" : {
+          "type" : "string",
+          "description" : "The ID of the substitution rule.",
+          "minLength" : 36,
+          "maxLength" : 64
+        },
+        "User" : {
+          "type" : "string",
+          "description" : "The user who substitutes the current user."
+        },
+        "BeginDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The date on which the substitution begins (UTC time)."
+        },
+        "EndDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The date on which the substitution ends (UTC time)."
+        },
+        "FullName" : {
+          "type" : "string",
+          "description" : "The user who substitutes the current user. The user name is identical with the value of the User field. The value of this field may change in future, so if you currently work with fullName you should consider to use the field \"User\" instead."
+        },
+        "Profile" : {
+          "type" : "string",
+          "description" : "Substitute profile ID."
+        },
+        "ProfileText" : {
+          "type" : "string",
+          "description" : "Substitute profile Name."
+        },
+        "Mode" : {
+          "type" : "string",
+          "description" : "The mode of the substitution rule.",
+          "enum" : [ "PLANNED", "UN_PLANNED" ]
+        },
+        "IsEnabled" : {
+          "type" : "boolean",
+          "description" : "Indicates whether the substitution rule is enabled."
+        },
+        "SupportsDeleteSubstitutionRule" : {
+          "type" : "boolean",
+          "description" : "Indicates whether the substitution rule can be deleted."
+        },
+        "SupportsEnableSubstitutionRule" : {
+          "type" : "boolean",
+          "description" : "Indicates whether the substitution rule can be enabled/disabled."
+        }
+      }
+    },
+    "Substitutions" : {
+      "type" : "object",
+      "properties" : {
+        "results" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/Substitutions_results"
+          },
+          "minItems" : 0
+        }
+      }
+    },
+    "Substitute" : {
+      "type" : "object",
+      "properties" : {
+        "SubstitutionRuleID" : {
+          "type" : "string",
+          "description" : "The ID of the substitution rule.",
+          "minLength" : 36,
+          "maxLength" : 64
+        },
+        "User" : {
+          "type" : "string",
+          "description" : "The user who is substituted by the currently logged-in user."
+        },
+        "BeginDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The date on which the substitution begins (UTC time)."
+        },
+        "EndDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The date on which the substitution ends (UTC time)."
+        },
+        "FullName" : {
+          "type" : "string",
+          "description" : "The user who substitutes the current user. The user name is identical with the value of the User field. The value of this field may change in future, so if you currently work with fullName you should consider to use the field \"User\" instead."
+        },
+        "Profile" : {
+          "type" : "string",
+          "description" : "Substitute profile ID."
+        },
+        "ProfileText" : {
+          "type" : "string",
+          "description" : "Substitute profile Name."
+        },
+        "Mode" : {
+          "type" : "string",
+          "description" : "The mode of the substitution rule.",
+          "enum" : [ "PLANNED", "UN_PLANNED" ]
+        },
+        "IsEnabled" : {
+          "type" : "boolean",
+          "description" : "Indicates whether the substitution rule is enabled."
+        },
+        "SupportsDeleteSubstitutionRule" : {
+          "type" : "boolean",
+          "description" : "Indicates whether the substitution rule can be deleted."
+        },
+        "SupportsEnableSubstitutionRule" : {
+          "type" : "boolean",
+          "description" : "Indicates whether the substitution rule can be enabled/disabled."
+        }
+      }
+    },
+    "Substitutes" : {
+      "type" : "object",
+      "properties" : {
+        "results" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/Substitutes_results"
+          },
+          "minItems" : 0
+        }
+      }
+    },
+    "SubstitutionProfile" : {
+      "type" : "object",
+      "properties" : {
+        "results" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/SubstitutionProfile_results"
+          },
+          "minItems" : 0
+        }
+      }
+    },
+    "SubstitutionCreatePayload" : {
+      "type" : "object",
+      "required" : [ "BeginDate", "IsEnabled", "Mode", "User" ],
+      "properties" : {
+        "User" : {
+          "type" : "string",
+          "description" : "The user who should substitute the current user."
+        },
+        "BeginDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The date on which the substitution should begin. It expects a UTC date. Please make sure to convert your timezone to UTC before sending a request. \n\nAdditional requirements apply:\n- It must be yesterday, today or in the future.         "
+        },
+        "EndDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The date on which the substitution should end. It expects a UTC date.\n\nAdditional requirements apply:\n- If the mode is 'PLANNED', it is required. Otherwise, it is ignored and set to null.          \n- It must be equal to the begin date or be more recent. But it cannot be in the past."
+        },
+        "Profile" : {
+          "type" : "string",
+          "description" : "Substitute profile ID. will discuss on All task group later"
+        },
+        "ProfileText" : {
+          "type" : "string",
+          "description" : "Substitute profile Name."
+        },
+        "Mode" : {
+          "type" : "string",
+          "description" : "The mode of the new substitution rule.\n\n- PLANNED (planned substitution): The substitution rule is enabled immediately.\nThe substitute receives the tasks of the substituted user in the defined period.\n- UN_PLANNED (unplanned substitution): The substitution rule is disabled by default and can be enabled by the substitute when needed \n(unplanned absence of substituted user). If enabled, the substitute receives the tasks of the substituted user starting on the defined begin date.",
+          "enum" : [ "PLANNED", "UN_PLANNED" ]
+        },
+        "IsEnabled" : {
+          "type" : "boolean",
+          "description" : "Indicates whether the new substitution rule should be enabled.\n\nAdditional requirements apply:\n- If mode is 'PLANNED', it must be 'true'.\n- If mode is 'UN_PLANNED', it must be 'false'."
+        }
+      }
+    },
+    "SubstitutionError-400" : {
+      "type" : "object",
+      "properties" : {
+        "error" : {
+          "$ref" : "#/definitions/SubstitutionError400_error"
+        }
+      }
+    },
+    "SubstitutionError-403" : {
+      "type" : "object",
+      "properties" : {
+        "error" : {
+          "$ref" : "#/definitions/SubstitutionError403_error"
+        }
+      }
+    },
+    "SubstitutionError-404" : {
+      "type" : "object",
+      "properties" : {
+        "error" : {
+          "$ref" : "#/definitions/SubstitutionError404_error"
+        }
+      }
+    },
+    "SubstitutionError-405" : {
+      "type" : "object",
+      "properties" : {
+        "error" : {
+          "$ref" : "#/definitions/SubstitutionError405_error"
+        }
+      }
+    },
+    "SubstitutionError-406" : {
+      "type" : "object",
+      "properties" : {
+        "error" : {
+          "$ref" : "#/definitions/SubstitutionError405_error"
+        }
+      }
+    },
+    "SubstitutionError-500" : {
+      "type" : "object",
+      "properties" : {
+        "error" : {
+          "$ref" : "#/definitions/SubstitutionError500_error"
+        }
+      }
+    },
+    "TaskReponse-200" : {
+      "type" : "object",
+      "properties" : {
+        "result" : {
+          "type" : "string"
+        }
+      }
+    },
+    "TaskError-400" : {
+      "type" : "object",
+      "properties" : {
+        "error" : {
+          "$ref" : "#/definitions/TaskError400_error"
+        }
+      }
+    },
+    "TaskError-403" : {
+      "type" : "object",
+      "properties" : {
+        "error" : {
+          "$ref" : "#/definitions/TaskError403_error"
+        }
+      }
+    },
+    "TaskError-404" : {
+      "type" : "object",
+      "properties" : {
+        "error" : {
+          "$ref" : "#/definitions/TaskError404_error"
+        }
+      }
+    },
+    "TaskError-405" : {
+      "type" : "object",
+      "properties" : {
+        "error" : {
+          "$ref" : "#/definitions/TaskError405_error"
+        }
+      }
+    },
+    "TaskError-406" : {
+      "type" : "object",
+      "properties" : {
+        "error" : {
+          "$ref" : "#/definitions/TaskError405_error"
+        }
+      }
+    },
+    "TaskError-500" : {
+      "type" : "object",
+      "properties" : {
+        "error" : {
+          "$ref" : "#/definitions/TaskError500_error"
+        }
+      }
+    },
+    "UnauthorizedError" : {
+      "type" : "object",
+      "required" : [ "error", "error_description" ],
+      "properties" : {
+        "error" : {
+          "type" : "string",
+          "description" : "The error name."
+        },
+        "error_description" : {
+          "type" : "string",
+          "description" : "The error description."
+        }
+      }
+    },
+    "WorkItem_TaskSupports_HeaderMessage" : {
+      "type" : "object",
+      "properties" : {
+        "MessageType" : {
+          "type" : "string",
+          "description" : "`E`: Error message. `W`: Warning message. `I`: Information message. `S`: Successful message",
+          "enum" : [ "E", "W", "I", "S" ]
+        },
+        "MessageText" : {
+          "type" : "string"
+        }
+      }
+    },
+    "WorkItem_TaskSupports" : {
+      "type" : "object",
+      "properties" : {
+        "NumberOfComments" : {
+          "type" : "integer",
+          "description" : "Count of comment Notes."
+        },
+        "NumberOfAttachments" : {
+          "type" : "integer",
+          "description" : "Count of Attachments."
+        },
+        "NumberOfObjects" : {
+          "type" : "integer",
+          "description" : "Count of related objects."
+        },
+        "AddAttachments" : {
+          "type" : "boolean",
+          "description" : "Enable/disable adding attachment feature."
+        },
+        "OpenTaskURL" : {
+          "type" : "string",
+          "description" : "Link for Open task."
+        },
+        "FeedBackURL" : {
+          "type" : "string",
+          "description" : "Link for feedback."
+        },
+        "MoreDetailsPDF" : {
+          "type" : "boolean"
+        },
+        "CustomField1" : {
+          "type" : "string"
+        },
+        "CustomField2" : {
+          "type" : "string"
+        },
+        "CustomField3" : {
+          "type" : "string"
+        },
+        "HeaderMessage" : {
+          "$ref" : "#/definitions/WorkItem_TaskSupports_HeaderMessage"
+        }
+      }
+    },
+    "WorkItem_WorkItemInfo_CustAttributes" : {
+      "type" : "object",
+      "properties" : {
+        "AttributeName" : {
+          "type" : "string"
+        },
+        "AttributeValue" : {
+          "type" : "string"
+        },
+        "AttributeType" : {
+          "type" : "string",
+          "description" : "Type of Attribute.",
+          "enum" : [ "TEXT", "DATETIME", "DATE", "LINK" ]
+        },
+        "AttributeOrder" : {
+          "type" : "integer"
+        }
+      }
+    },
+    "WorkItem_WorkItemInfo" : {
+      "type" : "object",
+      "properties" : {
+        "CustAttributes" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/WorkItem_WorkItemInfo_CustAttributes"
+          },
+          "minItems" : 0
+        }
+      },
+      "description" : "custom Attributes (Form)."
+    },
+    "WorkItem_headerDetails" : {
+      "type" : "object",
+      "properties" : {
+        "headerIndex" : {
+          "type" : "string"
+        },
+        "headerValue" : {
+          "type" : "string"
+        }
+      }
+    },
+    "WorkItem_DynamicGrids" : {
+      "type" : "object",
+      "properties" : {
+        "headerDetails" : {
+          "type" : "array",
+          "description" : "Header  of table",
+          "items" : {
+            "$ref" : "#/definitions/WorkItem_headerDetails"
+          }
+        },
+        "rowDetails" : {
+          "type" : "array",
+          "description" : "data  of table",
+          "items" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          }
+        },
+        "title" : {
+          "type" : "string"
+        },
+        "sequence" : {
+          "type" : "string"
+        }
+      }
+    },
+    "WorkItems_results" : {
+      "type" : "object",
+      "properties" : {
+        "InstanceID" : {
+          "type" : "string",
+          "description" : "The ID of the work item.",
+          "minLength" : 10,
+          "maxLength" : 255
+        },
+        "TaskDefinitionID" : {
+          "type" : "string",
+          "description" : "The ID of the task definition this work item belongs to. The ID consists of the task definition name and the workflow definition ID  in lowercase using the following format: {task definition name}@{workflow definition ID}.  "
+        },
+        "TaskDefinitionName" : {
+          "type" : "string",
+          "description" : "The modeled task definition name."
+        },
+        "Status" : {
+          "type" : "string",
+          "description" : "The current status of the work item.",
+          "enum" : [ "READY", "IN_PROGRESS", "RESERVED", "CANCELED", "COMPLETED" ]
+        },
+        "TaskTitle" : {
+          "type" : "string",
+          "description" : "The title of the work item as it appears in the inbox. Translation of this text is currently not supported."
+        },
+        "CreatedOn" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The time the work item was created."
+        },
+        "CreatedBy" : {
+          "type" : "string",
+          "description" : "The user who created the work item. The user ID is at most 255 characters long.",
+          "maxLength" : 255
+        },
+        "CreatedByName" : {
+          "type" : "string",
+          "description" : "As of now, this returns the same value as the CreatedBy property. This is subject to change."
+        },
+        "Processor" : {
+          "type" : "string",
+          "description" : "The user who works on the work item. The user ID is at most 255 characters long",
+          "maxLength" : 255
+        },
+        "CompletedOn" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The time by which the work item must be completed."
+        },
+        "SubstitutedUserName" : {
+          "type" : "string",
+          "description" : "The name of the Main user who is substituted by current user. If current user is main approver the value of this attribute will  return null."
+        },
+        "Priority" : {
+          "type" : "string",
+          "description" : "The priority of the work item.",
+          "enum" : [ "LOW", "MEDIUM", "HIGH", "VERY_HIGH" ]
+        },
+        "PriorityNumber" : {
+          "type" : "integer",
+          "description" : "The numerical representation of the priority of the work item."
+        }
+      }
+    },
+    "TaskDefinitions_results" : {
+      "type" : "object",
+      "properties" : {
+        "TaskDefinitionID" : {
+          "type" : "string",
+          "description" : "The ID of the task definition this work item belongs to. It consists of the task definition name and the workflow definition ID in the form {task definition name}@{workflow definition ID} in lowercase."
+        },
+        "TaskDefinitionName" : {
+          "type" : "string",
+          "description" : "The modeled task definition name."
+        }
+      }
+    },
+    "FilterAndSort_FilterBy_CreatedOn" : {
+      "type" : "object",
+      "properties" : {
+        "operator" : {
+          "type" : "string",
+          "description" : "Operator is `eq` means 'Equal'. Operator is `le` means 'Less Equal Than'. Operation is `ge` means 'Greater Equal Than'",
+          "enum" : [ "eq", "le", "ge" ]
+        },
+        "datetime" : {
+          "type" : "string",
+          "format" : "date-time",
+          "example" : "2018-08-13T16:24:47.000Z"
+        }
+      }
+    },
+    "FilterAndSort_FilterBy_CompletedOn" : {
+      "type" : "object",
+      "properties" : {
+        "operator" : {
+          "type" : "string",
+          "example" : "le",
+          "description" : "Operator is `eq` means 'Equal'. Operator is `le` means 'Less Equal Than'. Operation is `ge` means 'Greater Equal Than'",
+          "enum" : [ "eq", "le", "ge" ]
+        },
+        "datetime" : {
+          "type" : "string",
+          "format" : "date-time",
+          "example" : "2018-08-13T16:24:47.000Z"
+        }
+      }
+    },
+    "FilterAndSort_FilterBy" : {
+      "type" : "object",
+      "properties" : {
+        "TaskDefinitionID" : {
+          "type" : "string",
+          "example" : "TASKID1",
+          "description" : "supports filter multiple values that are combined with ',' (for example ':' `TASKID1,TASKID2,RBGA`)."
+        },
+        "Status" : {
+          "type" : "string",
+          "example" : "IN_PROGRESS",
+          "description" : "supports filter multiple values that are combined with ',' (for example: `IN_PROGRESS,READY,RESERVED,COMPLETED`)."
+        },
+        "Priority" : {
+          "type" : "string",
+          "example" : "MEDIUM",
+          "description" : "supports filter multiple values that are combined with ',' (for example: `MEDIUM,HIGH,LOW,VERY_HIGH`)."
+        },
+        "State" : {
+          "type" : "string",
+          "example" : "pending",
+          "description" : "pending : get pending work items (Inbox) proccessed : get proccessed work items (Outbox)"
+        },
+        "CreatedOn" : {
+          "$ref" : "#/definitions/FilterAndSort_FilterBy_CreatedOn"
+        },
+        "CompletedOn" : {
+          "$ref" : "#/definitions/FilterAndSort_FilterBy_CompletedOn"
+        },
+        "SubstitutedUser" : {
+          "type" : "string",
+          "example" : "T_UIB80001",
+          "description" : "supports filter multiple values that are combined with ',' (for example: `null, T_UIB80001,T_UIB80002,T_UIB80003`). if the attribute contains `null` means get workitems as main approver"
+        }
+      }
+    },
+    "ApproverNotes_results" : {
+      "type" : "object",
+      "properties" : {
+        "InstanceID" : {
+          "type" : "string",
+          "description" : "The ID of the work item."
+        },
+        "ConmmentID" : {
+          "type" : "string",
+          "description" : "The ID of the comment"
+        },
+        "CreatedAt" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The time the comment was created."
+        },
+        "CreatedBy" : {
+          "type" : "string",
+          "description" : "the comment was written by whom (User ID)"
+        },
+        "CreatedByName" : {
+          "type" : "string",
+          "description" : "the comment was written by whom (Fullname)"
+        },
+        "Text" : {
+          "type" : "string",
+          "description" : "the comment text"
+        },
+        "Action" : {
+          "type" : "string",
+          "description" : "the comment status. Example: `Approved`, `Rejected`"
+        }
+      }
+    },
+    "Attachments_AttachmentSupports" : {
+      "type" : "object",
+      "properties" : {
+        "Delete" : {
+          "type" : "boolean",
+          "description" : "Delete = true. File can be deleted by user"
+        }
+      }
+    },
+    "Attachments_results" : {
+      "type" : "object",
+      "properties" : {
+        "InstanceID" : {
+          "type" : "string",
+          "description" : "The ID of the work item."
+        },
+        "ID" : {
+          "type" : "string",
+          "description" : "The ID of the Attachment"
+        },
+        "FileName" : {
+          "type" : "string",
+          "description" : "The name of attachment file"
+        },
+        "CreatedAt" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The time the attachment was added."
+        },
+        "CreatedBy" : {
+          "type" : "string",
+          "description" : "The attachment was added by whom (User ID)"
+        },
+        "CreatedByName" : {
+          "type" : "string",
+          "description" : "The attachment was added by whom (Fullname)"
+        },
+        "Mime_Type" : {
+          "type" : "string",
+          "description" : "Type of file"
+        },
+        "FileSize" : {
+          "type" : "integer",
+          "description" : "The size of the attachment."
+        },
+        "GroupName" : {
+          "type" : "string",
+          "description" : "If GroupName is not blank, attachements will group by GroupName."
+        },
+        "AttachmentSupports" : {
+          "$ref" : "#/definitions/Attachments_AttachmentSupports"
+        }
+      }
+    },
+    "RelatedObjects_results" : {
+      "type" : "object",
+      "properties" : {
+        "InstanceID" : {
+          "type" : "string",
+          "description" : "The ID of the work item."
+        },
+        "Sequence" : {
+          "type" : "integer"
+        },
+        "ObjectID" : {
+          "type" : "string",
+          "description" : "The ID of the object"
+        },
+        "ObjectLink" : {
+          "type" : "string",
+          "format" : "link",
+          "description" : "The link of object."
+        },
+        "Label" : {
+          "type" : "string",
+          "description" : "the display Label of the object link"
+        }
+      }
+    },
+    "Decisions_results" : {
+      "type" : "object",
+      "properties" : {
+        "DecisionKey" : {
+          "type" : "string",
+          "description" : "Decsion key"
+        },
+        "DecisionText" : {
+          "type" : "string",
+          "description" : "lable of button"
+        },
+        "CommentMandatory" : {
+          "type" : "boolean"
+        },
+        "Nature" : {
+          "type" : "string",
+          "description" : "By default: - `POSITIVE` is `Approve`. - `NEGATIVE` is `Reject`. - `null` is others.",
+          "enum" : [ "POSITIVE", "NEGATIVE", "null" ]
+        }
+      }
+    },
+    "Substitutions_results" : {
+      "type" : "object",
+      "properties" : {
+        "SubstitutionRuleID" : {
+          "type" : "string",
+          "description" : "The ID of the substitution rule.",
+          "minLength" : 36,
+          "maxLength" : 64
+        },
+        "User" : {
+          "type" : "string",
+          "description" : "The user who substitutes the current user."
+        },
+        "BeginDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The date on which the substitution begins (UTC time)."
+        },
+        "EndDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The date on which the substitution ends (UTC time)."
+        },
+        "FullName" : {
+          "type" : "string",
+          "description" : "The user who substitutes the current user. The user name is identical with the value of the User field. The value of this field may change in future, so if you currently work with fullName you should consider to use the field \"User\" instead."
+        },
+        "Profile" : {
+          "type" : "string",
+          "description" : "Substitute profile ID."
+        },
+        "ProfileText" : {
+          "type" : "string",
+          "description" : "Substitute profile Name."
+        },
+        "Mode" : {
+          "type" : "string",
+          "description" : "The mode of the substitution rule.",
+          "enum" : [ "PLANNED", "UN_PLANNED" ]
+        },
+        "IsEnabled" : {
+          "type" : "boolean",
+          "description" : "Indicates whether the substitution rule is enabled."
+        },
+        "SupportsDeleteSubstitutionRule" : {
+          "type" : "boolean",
+          "description" : "Indicates whether the substitution rule can be deleted."
+        },
+        "SupportsEnableSubstitutionRule" : {
+          "type" : "boolean",
+          "description" : "Indicates whether the substitution rule can be enabled/disabled."
+        }
+      }
+    },
+    "Substitutes_results" : {
+      "type" : "object",
+      "properties" : {
+        "SubstitutionRuleID" : {
+          "type" : "string",
+          "description" : "The ID of the substitution rule.",
+          "minLength" : 36,
+          "maxLength" : 64
+        },
+        "User" : {
+          "type" : "string",
+          "description" : "The user who is substituted by the currently logged-in user."
+        },
+        "BeginDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The date on which the substitution begins (UTC time)."
+        },
+        "EndDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "The date on which the substitution ends (UTC time)."
+        },
+        "FullName" : {
+          "type" : "string",
+          "description" : "The user who substitutes the current user. The user name is identical with the value of the User field. The value of this field may change in future, so if you currently work with fullName you should consider to use the field \"User\" instead."
+        },
+        "Profile" : {
+          "type" : "string",
+          "description" : "Substitute profile ID."
+        },
+        "ProfileText" : {
+          "type" : "string",
+          "description" : "Substitute profile Name."
+        },
+        "Mode" : {
+          "type" : "string",
+          "description" : "The mode of the substitution rule.",
+          "enum" : [ "PLANNED", "UN_PLANNED" ]
+        },
+        "IsEnabled" : {
+          "type" : "boolean",
+          "description" : "Indicates whether the substitution rule is enabled."
+        },
+        "SupportsDeleteSubstitutionRule" : {
+          "type" : "boolean",
+          "description" : "Indicates whether the substitution rule can be deleted."
+        },
+        "SupportsEnableSubstitutionRule" : {
+          "type" : "boolean",
+          "description" : "Indicates whether the substitution rule can be enabled/disabled."
+        }
+      }
+    },
+    "SubstitutionProfile_results" : {
+      "type" : "object",
+      "properties" : {
+        "Profile" : {
+          "type" : "string",
+          "description" : "Substitute profile ID."
+        },
+        "ProfileText" : {
+          "type" : "string",
+          "description" : "Substitute profile Name."
+        }
+      }
+    },
+    "SubstitutionError400_error" : {
+      "type" : "object",
+      "properties" : {
+        "code" : {
+          "type" : "string",
+          "description" : "The error category.",
+          "enum" : [ "SUBSTITUTION_BAD_REQUEST" ]
+        },
+        "message" : {
+          "type" : "string",
+          "description" : "The error message."
+        }
+      }
+    },
+    "SubstitutionError403_error" : {
+      "type" : "object",
+      "properties" : {
+        "code" : {
+          "type" : "string",
+          "description" : "The error category.",
+          "enum" : [ "SUBSTITUTION_INVALID_USER", "SUBSTITUTION_USER_NOT_AUTHORIZED" ]
+        },
+        "message" : {
+          "type" : "string",
+          "description" : "The error message."
+        }
+      }
+    },
+    "SubstitutionError404_error" : {
+      "type" : "object",
+      "properties" : {
+        "code" : {
+          "type" : "string",
+          "description" : "The error category.",
+          "enum" : [ "SUBSTITUTION_NOT_FOUND" ]
+        },
+        "message" : {
+          "type" : "string",
+          "description" : "The error message."
+        }
+      }
+    },
+    "SubstitutionError405_error" : {
+      "type" : "object",
+      "properties" : {
+        "code" : {
+          "type" : "string",
+          "description" : "The error category.",
+          "enum" : [ "null" ]
+        },
+        "message" : {
+          "type" : "string",
+          "description" : "The error message."
+        }
+      }
+    },
+    "SubstitutionError500_error" : {
+      "type" : "object",
+      "properties" : {
+        "code" : {
+          "type" : "string",
+          "description" : "The error category.",
+          "enum" : [ "SUBSTITUTION_INVALID_STATE_TRANSITION", "INVALID_DATA" ]
+        },
+        "message" : {
+          "type" : "string",
+          "description" : "The error message."
+        }
+      }
+    },
+    "TaskError400_error" : {
+      "type" : "object",
+      "properties" : {
+        "code" : {
+          "type" : "string",
+          "description" : "The error category.",
+          "enum" : [ "TASK_BAD_REQUEST" ]
+        },
+        "message" : {
+          "type" : "string",
+          "description" : "The error message"
+        }
+      }
+    },
+    "TaskError403_error" : {
+      "type" : "object",
+      "properties" : {
+        "code" : {
+          "type" : "string",
+          "description" : "The error category.",
+          "enum" : [ "TASK_USER_NOT_AUTHORIZED", "TASK_CLAIMED_BY_OTHER_USER", "TASK_FORWARD_FORBIDDEN" ]
+        },
+        "message" : {
+          "type" : "string",
+          "description" : "The error message"
+        }
+      }
+    },
+    "TaskError404_error" : {
+      "type" : "object",
+      "properties" : {
+        "code" : {
+          "type" : "string",
+          "description" : "The error category.",
+          "enum" : [ "TASK_NOT_FOUND" ]
+        },
+        "message" : {
+          "type" : "string",
+          "description" : "The error message"
+        }
+      }
+    },
+    "TaskError405_error" : {
+      "type" : "object",
+      "properties" : {
+        "code" : {
+          "type" : "string",
+          "description" : "The error category.",
+          "enum" : [ "null" ]
+        },
+        "message" : {
+          "type" : "string",
+          "description" : "The error message"
+        }
+      }
+    },
+    "TaskError500_error" : {
+      "type" : "object",
+      "properties" : {
+        "code" : {
+          "type" : "string",
+          "description" : "The error category.",
+          "enum" : [ "TASK_INVALID_STATE_TRANSITION" ]
+        },
+        "message" : {
+          "type" : "string",
+          "description" : "The error message"
+        }
+      }
+    }
+  },
+  "responses" : {
+    "200" : {
+      "description" : "Response success.",
+      "examples" : {
+        "application/json" : {
+          "result" : "success"
+        }
+      },
+      "schema" : {
+        "$ref" : "#/definitions/TaskReponse-200"
+      }
+    },
+    "400" : {
+      "description" : "The syntax of the sent request is invalid.",
+      "examples" : {
+        "application/json" : {
+          "error" : {
+            "code" : "TASK_BAD_REQUEST",
+            "message" : "An error occured: 400 Bad Request"
+          }
+        }
+      },
+      "schema" : {
+        "$ref" : "#/definitions/TaskError-400"
+      }
+    },
+    "401" : {
+      "description" : "Unauthorized. You do not have provided valid authentication credentials to access the resource.",
+      "examples" : {
+        "application/json" : {
+          "error" : "unauthorized",
+          "error_description" : "Full authentication is required to access this resource."
+        }
+      },
+      "schema" : {
+        "$ref" : "#/definitions/UnauthorizedError"
+      }
+    },
+    "403" : {
+      "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+      "examples" : {
+        "application/json" : {
+          "error" : {
+            "code" : "TASK_USER_NOT_AUTHORIZED",
+            "message" : "An error occured: 403 Forbidden"
+          }
+        }
+      },
+      "schema" : {
+        "$ref" : "#/definitions/TaskError-403"
+      }
+    },
+    "404" : {
+      "description" : "The requested object could not be found.",
+      "examples" : {
+        "application/json" : {
+          "error" : {
+            "code" : "TASK_NOT_FOUND",
+            "message" : "An error occured: 404 Not Found"
+          }
+        }
+      },
+      "schema" : {
+        "$ref" : "#/definitions/TaskError-404"
+      }
+    },
+    "405" : {
+      "description" : "The action to be executed is not supported by the service.",
+      "examples" : {
+        "application/json" : {
+          "error" : {
+            "message" : "An error occured: 405 Method Not Allowed"
+          }
+        }
+      },
+      "schema" : {
+        "$ref" : "#/definitions/TaskError-405"
+      }
+    },
+    "406" : {
+      "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+      "examples" : {
+        "application/json" : {
+          "error" : {
+            "message" : "An error occured: 406 Not Acceptable"
+          }
+        }
+      },
+      "schema" : {
+        "$ref" : "#/definitions/TaskError-406"
+      }
+    },
+    "500" : {
+      "description" : "An error occurred while processing the request.",
+      "examples" : {
+        "application/json" : {
+          "error" : {
+            "code" : "TASK_INVALID_STATE_TRANSITION",
+            "message" : "An error occured: 500 Internal Server Error"
+          }
+        }
+      },
+      "schema" : {
+        "$ref" : "#/definitions/TaskError-500"
+      }
+    },
+    "400Substitution" : {
+      "description" : "The syntax of the sent request is invalid.",
+      "examples" : {
+        "application/json" : {
+          "error" : {
+            "code" : "SUBSTITUTION_BAD_REQUEST",
+            "message" : "An error occured: 400 Bad Request"
+          }
+        }
+      },
+      "schema" : {
+        "$ref" : "#/definitions/SubstitutionError-400"
+      }
+    },
+    "403Substitution" : {
+      "description" : "The user who sent the request is not authorized to access the requested data or to perform the requested action.",
+      "examples" : {
+        "application/json" : {
+          "error" : {
+            "code" : "TASK_USER_NOT_AUTHORIZED",
+            "message" : "An error occured: 403 Forbidden"
+          }
+        }
+      },
+      "schema" : {
+        "$ref" : "#/definitions/SubstitutionError-403"
+      }
+    },
+    "404Substitution" : {
+      "description" : "The requested object could not be found.",
+      "examples" : {
+        "application/json" : {
+          "error" : {
+            "code" : "SUBSTITUTION_NOT_FOUND",
+            "message" : "An error occured: 404 Not Found"
+          }
+        }
+      },
+      "schema" : {
+        "$ref" : "#/definitions/SubstitutionError-404"
+      }
+    },
+    "405Substitution" : {
+      "description" : "The action to be executed is not supported by the service.",
+      "examples" : {
+        "application/json" : {
+          "error" : {
+            "message" : "An error occured: 405 Method Not Allowed"
+          }
+        }
+      },
+      "schema" : {
+        "$ref" : "#/definitions/SubstitutionError-405"
+      }
+    },
+    "406Substitution" : {
+      "description" : "The requested object cannot be returned in the specified format according to the accept headers.",
+      "examples" : {
+        "application/json" : {
+          "error" : {
+            "message" : "An error occured: 406 Not Acceptable"
+          }
+        }
+      },
+      "schema" : {
+        "$ref" : "#/definitions/SubstitutionError-406"
+      }
+    },
+    "500Substitution" : {
+      "description" : "An error occurred while processing the request.",
+      "examples" : {
+        "application/json" : {
+          "error" : {
+            "code" : "SUBSTITUTION_INVALID_STATE_TRANSITION",
+            "message:'An error occured" : "500 Internal Server Error'"
+          }
+        }
+      },
+      "schema" : {
+        "$ref" : "#/definitions/SubstitutionError-500"
+      }
+    }
+  }
+}
