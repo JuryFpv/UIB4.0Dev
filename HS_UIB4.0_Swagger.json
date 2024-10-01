@@ -6,7 +6,7 @@
     "title" : "API structure for UIB to get data from Helper Service or NonSAP Cloud system",
     "termsOfService" : "",
     "contact" : {
-      "email" : "tai.vothanh2@vn.bosch.com;dong.nguyenduc@vn.bosch.com;nhut.duongminh@vn.bosch.com"
+      "email" : "dong.nguyenduc@vn.bosch.com;nhut.duongminh@vn.bosch.com"
     },
     "license" : {
       "name" : "Apache 2.0",
